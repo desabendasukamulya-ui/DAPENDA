@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token.email != null && request.auth.token.email.lower() == 'desabendasukamulya@gmail.com') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    // Koleksi Profil Pengguna Petugas
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Koleksi Data Warga Kependudukan
+    match /residents/{residentId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Koleksi Mutasi Penduduk (Pindah Masuk & Pindah Keluar)
+    match /mutations/{mutationId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // Koleksi Catatan Audit Aktivitas
+    match /audit_logs/{logId} {
+      allow read, create: if true;
+      allow update, delete: if false; // Riwayat audit bersifat immutable
+    }
+  }
+}

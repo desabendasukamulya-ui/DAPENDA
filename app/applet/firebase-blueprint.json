@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "Resident": {
+      "title": "Resident",
+      "description": "Data kependudukan penduduk Desa Benda",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unik dokumen penduduk" },
+        "nik": { "type": "string", "description": "Nomor Induk Kependudukan (16 digit)" },
+        "noKk": { "type": "string", "description": "Nomor Kartu Keluarga (16 digit)" },
+        "namaLengkap": { "type": "string", "description": "Nama lengkap warga" },
+        "jenisKelamin": { "type": "string", "description": "LAKI-LAKI atau PEREMPUAN" },
+        "tempatLahir": { "type": "string", "description": "Tempat lahir" },
+        "tanggalLahir": { "type": "string", "description": "Tanggal lahir format YYYY-MM-DD" },
+        "rt": { "type": "string", "description": "Rukun Tetangga (RT)" },
+        "rw": { "type": "string", "description": "Rukun Warga (RW)" },
+        "dusun": { "type": "string", "description": "Nama dusun/wilayah" },
+        "alamatLengkap": { "type": "string", "description": "Alamat domisili lengkap" },
+        "agama": { "type": "string", "description": "Agama yang dianut" },
+        "statusKeluarga": { "type": "string", "description": "Status hubungan dalam keluarga" },
+        "statusKawin": { "type": "string", "description": "Status perkawinan" },
+        "pekerjaan": { "type": "string", "description": "Pekerjaan warga" },
+        "pendidikan": { "type": "string", "description": "Tingkat pendidikan terakhir" },
+        "golonganDarah": { "type": "string", "description": "Golongan darah (A, B, AB, O, -)" },
+        "statusTinggal": { "type": "string", "description": "Status domisili tinggal warga" },
+        "noHp": { "type": "string", "description": "Nomor telepon/WhatsApp" },
+        "bantuanSosial": { "type": "boolean", "description": "Status penerima bantuan sosial" },
+        "disabilitas": { "type": "boolean", "description": "Status penyandang disabilitas" },
+        "catatan": { "type": "string", "description": "Catatan tambahan administrasi" },
+        "fotoPenduduk": { "type": "string", "description": "Foto wajah penduduk (base64/URL/path)" },
+        "fotoKtp": { "type": "string", "description": "Foto KTP penduduk" },
+        "fotoKk": { "type": "string", "description": "Foto Kartu Keluarga" },
+        "createdAt": { "type": "integer", "description": "Waktu pembuatan data (epoch ms)" },
+        "updatedAt": { "type": "integer", "description": "Waktu terakhir data diperbarui (epoch ms)" },
+        "updatedBy": { "type": "string", "description": "Email atau identitas pengguna yang memperbarui" }
+      },
+      "required": ["nik", "namaLengkap", "rt", "rw"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Profil pengguna dan hak akses peran (admin/operator)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "Alamat email pengguna" },
+        "displayName": { "type": "string", "description": "Nama tampilan pengguna" },
+        "role": { "type": "string", "enum": ["admin", "operator"], "description": "Peran hak akses pengguna" },
+        "createdAt": { "type": "integer", "description": "Waktu pendaftaran akun" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Catatan riwayat audit aktivitas data",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "description": "Jenis tindakan: CREATE, UPDATE, DELETE, MIGRATE" },
+        "entity": { "type": "string", "description": "Nama entitas: Resident" },
+        "entityId": { "type": "string", "description": "ID data yang diubah" },
+        "performedBy": { "type": "string", "description": "Email pengguna pelaksana tindakan" },
+        "timestamp": { "type": "integer", "description": "Waktu pencatatan (epoch ms)" },
+        "details": { "type": "string", "description": "Deskripsi rincian perubahan" }
+      },
+      "required": ["action", "performedBy", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/residents/{residentId}": {
+      "schema": "Resident",
+      "description": "Koleksi data kependudukan warga Desa Benda"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Koleksi profil pengguna dan izin akses peran admin/operator"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Koleksi jejak audit aktivitas perubahan data"
+    }
+  }
+}

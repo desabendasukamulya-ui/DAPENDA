@@ -1,0 +1,6 @@
+{
+  "name": "DAPENDA",
+  "description": "Data Penduduk Desa Benda - Aplikasi input dan manajemen data kependudukan per RT dan RW Desa Benda.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

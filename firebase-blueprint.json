@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profil pengguna dan peranan akses (Admin atau Operator)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID atau ID Petugas" },
+        "email": { "type": "string", "description": "Email resmi atau username pengguna" },
+        "displayName": { "type": "string", "description": "Nama tampilan pengguna" },
+        "role": { "type": "string", "enum": ["admin", "operator"], "description": "Peranan akses pengguna" },
+        "rt": { "type": "string", "description": "Wilayah RT petugas" },
+        "rw": { "type": "string", "description": "Wilayah RW petugas" },
+        "phone": { "type": "string", "description": "Nomor kontak atau WhatsApp petugas" },
+        "passwordHash": { "type": "string", "description": "Hash sandi atau PIN petugas" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Waktu pendaftaran akun" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Resident": {
+      "title": "Resident",
+      "description": "Data kependudukan warga Desa Benda",
+      "type": "object",
+      "properties": {
+        "nik": { "type": "string", "description": "Nomor Induk Kependudukan 16 digit" },
+        "noKk": { "type": "string", "description": "Nomor Kartu Keluarga 16 digit" },
+        "namaLengkap": { "type": "string", "description": "Nama lengkap warga" },
+        "jenisKelamin": { "type": "string", "description": "Jenis kelamin" },
+        "tempatLahir": { "type": "string", "description": "Tempat lahir" },
+        "tanggalLahir": { "type": "string", "description": "Tanggal lahir format YYYY-MM-DD" },
+        "rt": { "type": "string", "description": "Nomor RT" },
+        "rw": { "type": "string", "description": "Nomor RW" },
+        "dusun": { "type": "string", "description": "Nama dusun" },
+        "alamatLengkap": { "type": "string", "description": "Alamat tempat tinggal lengkap" },
+        "agama": { "type": "string", "description": "Agama warga" },
+        "statusKeluarga": { "type": "string", "description": "Hubungan status dalam keluarga" },
+        "statusKawin": { "type": "string", "description": "Status perkawinan" },
+        "pekerjaan": { "type": "string", "description": "Pekerjaan warga" },
+        "pendidikan": { "type": "string", "description": "Pendidikan terakhir" },
+        "golonganDarah": { "type": "string", "description": "Golongan darah" },
+        "statusTinggal": { "type": "string", "description": "Status tempat tinggal warga" },
+        "noHp": { "type": "string", "description": "Nomor kontak telepon atau WhatsApp" },
+        "bantuanSosial": { "type": "boolean", "description": "Penerima bantuan sosial" },
+        "disabilitas": { "type": "boolean", "description": "Penyandang disabilitas" },
+        "catatan": { "type": "string", "description": "Catatan tambahan" },
+        "fotoPenduduk": { "type": "string", "description": "Path berkas foto warga" },
+        "fotoKtp": { "type": "string", "description": "Path berkas foto KTP" },
+        "fotoKk": { "type": "string", "description": "Path berkas foto KK" },
+        "fotoPendudukBase64": { "type": "string", "description": "Data gambar foto warga terkompresi Base64 untuk sinkronisasi antar-perangkat" },
+        "fotoKtpBase64": { "type": "string", "description": "Data gambar foto e-KTP terkompresi Base64 untuk sinkronisasi antar-perangkat" },
+        "fotoKkBase64": { "type": "string", "description": "Data gambar foto Kartu Keluarga terkompresi Base64 untuk sinkronisasi antar-perangkat" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Waktu pertama kali ditambahkan" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Waktu terakhir data diperbarui" },
+        "updatedBy": { "type": "string", "description": "Email operator atau admin yang memperbarui" }
+      },
+      "required": ["nik", "noKk", "namaLengkap", "jenisKelamin", "rt", "rw"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Catatan riwayat aktivitas pengguna untuk audit integritas data",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "description": "Jenis aksi: TAMBAH, UBAH, HAPUS, MIGRASI_LOKAL" },
+        "entity": { "type": "string", "description": "Nama entitas yang diubah" },
+        "entityId": { "type": "string", "description": "ID objek yang terdampak" },
+        "performedBy": { "type": "string", "description": "Email pengguna pelaksana aksi" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Waktu aksi dicatat" },
+        "details": { "type": "string", "description": "Keterangan rinci aktivitas" }
+      },
+      "required": ["action", "entity", "entityId", "performedBy"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Koleksi akun profil pengguna sistem kependudukan"
+    },
+    "/residents/{residentId}": {
+      "schema": "Resident",
+      "description": "Koleksi data kependudukan warga Desa Benda"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Koleksi catatan audit log perubahan data kependudukan"
+    }
+  }
+}
