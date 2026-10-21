@@ -198,7 +198,7 @@ fun AuthScreen(
       Spacer(modifier = Modifier.height(10.dp))
 
       Text(
-        text = "DAPENDA ONLINE",
+        text = "SIDAPENDA ONLINE",
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.ExtraBold,
         color = MaterialTheme.colorScheme.onSurface
@@ -316,7 +316,7 @@ fun AuthScreen(
               value = loginIdentifier,
               onValueChange = { loginIdentifier = it },
               label = { Text("Email / Username / No. HP") },
-              placeholder = { Text("Contoh: admin, rt01, atau email") },
+              placeholder = { Text("Masukkan username, email, atau no. HP") },
               leadingIcon = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
               modifier = Modifier.fillMaxWidth(),
               singleLine = true,
@@ -396,71 +396,30 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Petunjuk akun resmi dan pembatasan akses
+            // Informasi pembatasan akses akun terdaftar
             Surface(
               shape = RoundedCornerShape(10.dp),
-              color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-              border = androidx.compose.foundation.BorderStroke(1.dp, TealPrimary.copy(alpha = 0.3f)),
+              color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+              border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
               modifier = Modifier.fillMaxWidth()
             ) {
-              Column(modifier = Modifier.padding(12.dp)) {
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                  Icon(Icons.Default.Security, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(16.dp))
-                  Text(
-                    text = "Akses Khusus Akun Terdaftar:",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                  )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
+              Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Security,
+                  contentDescription = null,
+                  tint = TealPrimary,
+                  modifier = Modifier.size(20.dp)
+                )
                 Text(
-                  text = "Aplikasi hanya dapat dibuka oleh akun yang sudah terdaftar. Jika belum terdaftar, silakan daftarkan akun baru atau hubungi Admin.",
+                  text = "Akses Terbatas: Hanya akun petugas resmi yang telah didaftarkan yang dapat masuk ke aplikasi SIDAPENDA.",
                   style = MaterialTheme.typography.bodySmall,
                   fontSize = 11.sp,
                   color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                Surface(
-                  shape = RoundedCornerShape(6.dp),
-                  color = TealPrimary.copy(alpha = 0.1f),
-                  modifier = Modifier.fillMaxWidth()
-                ) {
-                  Column(modifier = Modifier.padding(8.dp)) {
-                    Text(
-                      text = "Akun Administrator Desa:",
-                      style = MaterialTheme.typography.labelSmall,
-                      fontWeight = FontWeight.Bold,
-                      color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                      text = "User : admin\nPassword : Benda15631 (dapat dirubah)",
-                      style = MaterialTheme.typography.bodySmall,
-                      fontWeight = FontWeight.SemiBold,
-                      fontSize = 12.sp,
-                      color = TealPrimary
-                    )
-                  }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                  onClick = {
-                    loginIdentifier = "admin"
-                    loginPassword = "Benda15631"
-                  },
-                  colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                  modifier = Modifier.fillMaxWidth().height(36.dp)
-                ) {
-                  Text(
-                    text = "Gunakan Akun Admin (admin / Benda15631)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontWeight = FontWeight.Bold
-                  )
-                }
               }
             }
 
@@ -765,7 +724,7 @@ fun AuthScreen(
       Spacer(modifier = Modifier.height(20.dp))
 
       Text(
-        text = "Aplikasi DAPENDA • Terkoneksi Real-time Cloud Firestore\nDesa Benda, Kec. Sukamulya, Kab. Tangerang",
+        text = "Aplikasi SIDAPENDA • Terkoneksi Real-time Cloud Firestore\nDesa Benda, Kec. Sukamulya, Kab. Tangerang",
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
         textAlign = TextAlign.Center

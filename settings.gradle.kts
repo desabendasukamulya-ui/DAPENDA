@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "DAPENDA"
+rootProject.name = "SIDAPENDA"
 
 include(":app")

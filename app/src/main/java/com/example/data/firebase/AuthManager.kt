@@ -196,21 +196,6 @@ class AuthManager(
       // 2. Pemeriksaan Akun Operator yang Terdaftar di Cloud Firestore
       var matchedUser = firestoreRepository.findUserByIdentifier(trimmed)
 
-      // Fallback ke daftar operator bawaan resmi jika belum ada di database cloud (misal saat offline atau inisialisasi)
-      if (matchedUser == null) {
-        val defaultOps = com.example.data.sample.SampleData.getDefaultRegisteredOperators()
-        matchedUser = defaultOps.find {
-          it.email.equals(trimmed, ignoreCase = true) ||
-          it.phone == trimmed ||
-          it.displayName.equals(trimmed, ignoreCase = true) ||
-          it.uid.equals(trimmed, ignoreCase = true)
-        }
-        if (matchedUser != null) {
-          // Daftarkan ke firestore secara background agar tersinkronisasi
-          firestoreRepository.saveUserProfile(matchedUser)
-        }
-      }
-
       // 3. Fallback pemeriksaan sesi lokal yang telah tersimpan
       if (matchedUser == null) {
         val localUser = sessionManager.getSavedSession()

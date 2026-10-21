@@ -250,7 +250,7 @@ fun ResidentDetailScreen(
           IconButton(
             onClick = {
               val shareText = """
-                *BIODATA PENDUDUK RT (DAPENDA)*
+                *BIODATA PENDUDUK RT (SIDAPENDA)*
                 Nama: ${resident.namaLengkap}
                 NIK: ${resident.nik}
                 No KK: ${resident.noKk}

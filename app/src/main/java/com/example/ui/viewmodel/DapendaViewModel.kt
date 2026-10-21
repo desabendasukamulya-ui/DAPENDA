@@ -129,11 +129,16 @@ class DapendaViewModel(application: Application) : AndroidViewModel(application)
               _mutations.value = muts
             }
           }
-          // Amati data operator RT/RW terdaftar berikut nomor WhatsApp
+          // Amati data operator RT/RW terdaftar (hanya operator yang mendaftar atau didaftarkan admin)
           launch {
-            firestoreRepo.seedDefaultOperatorsIfEmpty()
+            firestoreRepo.cleanupDummyOperators()
             firestoreRepo.observeAllUsers().collect { list ->
-              _operators.value = list.filter { !it.isAdmin }
+              _operators.value = list.filter {
+                !it.isAdmin &&
+                !com.example.data.sample.SampleData.dummyOperatorUids.contains(it.uid) &&
+                !it.uid.startsWith("op_rt") &&
+                !it.email.endsWith("@desabenda.id")
+              }
             }
           }
           // Sinkronisasikan foto lokal yang ada di HP operator ke cloud jika belum terunggah
@@ -622,6 +627,64 @@ class DapendaViewModel(application: Application) : AndroidViewModel(application)
     }
   }
 
+  fun recordKelahiran(
+    event: com.example.data.model.PopulationMutation,
+    onSuccess: () -> Unit
+  ) {
+    if (event.namaLengkap.isBlank()) {
+      showToast("Nama lengkap bayi wajib diisi!")
+      return
+    }
+    if (event.noKk.isBlank()) {
+      showToast("Nomor KK keluarga bayi wajib diisi!")
+      return
+    }
+
+    viewModelScope.launch {
+      try {
+        val userEmail = getActiveOperatorIdentity()
+        val result = firestoreRepo.recordKelahiran(event, userEmail)
+        if (result.isSuccess) {
+          showToast("Berhasil: Data kelahiran ${event.namaLengkap} otomatis menambahkan 1 data warga baru!")
+          onSuccess()
+        } else {
+          showToast("Gagal: ${result.exceptionOrNull()?.localizedMessage}")
+        }
+      } catch (e: Exception) {
+        showToast("Terjadi kesalahan: ${e.localizedMessage}")
+      }
+    }
+  }
+
+  fun recordKematian(
+    event: com.example.data.model.PopulationMutation,
+    removePermanently: Boolean,
+    onSuccess: () -> Unit
+  ) {
+    if (event.nik.length != 16) {
+      showToast("Pilih data warga yang valid (NIK 16 digit)!")
+      return
+    }
+
+    viewModelScope.launch {
+      try {
+        val userEmail = getActiveOperatorIdentity()
+        val result = firestoreRepo.recordKematian(event, removePermanently, userEmail)
+        if (result.isSuccess) {
+          if (removePermanently) {
+            localRepo.deleteById(event.nik.toLongOrNull() ?: 0L)
+          }
+          showToast("Berhasil: Data kematian ${event.namaLengkap} otomatis mengurangi data warga aktif!")
+          onSuccess()
+        } else {
+          showToast("Gagal: ${result.exceptionOrNull()?.localizedMessage}")
+        }
+      } catch (e: Exception) {
+        showToast("Terjadi kesalahan: ${e.localizedMessage}")
+      }
+    }
+  }
+
   fun deleteMutation(mutationId: String) {
     viewModelScope.launch {
       try {
@@ -687,4 +750,54 @@ class DapendaViewModel(application: Application) : AndroidViewModel(application)
       }
     }
   }
+
+  // ================= WEB PORTAL SERVER & ONLINE INTEGRATION =================
+  val isWebServerRunning: StateFlow<Boolean> = com.example.util.WebPortalServer.isServerRunning
+  val webServerAddress: StateFlow<String> = com.example.util.WebPortalServer.serverAddress
+
+  /**
+   * Mengaktifkan server web lokal agar komputer/laptop dapat mengakses SIDAPENDA Web Online.
+   */
+  fun startWebServer() {
+    val app = getApplication<Application>()
+    com.example.util.WebPortalServer.residentDataProvider = { allResidents.value }
+    com.example.util.WebPortalServer.startServer(app)
+    val addr = com.example.util.WebPortalServer.serverAddress.value
+    showToast(if (addr.isNotBlank()) "Web Server aktif di $addr" else "Menyalakan server web...")
+  }
+
+  /**
+   * Menonaktifkan server web lokal.
+   */
+  fun stopWebServer() {
+    com.example.util.WebPortalServer.stopServer()
+    showToast("Server Web Portal dinonaktifkan")
+  }
+
+  /**
+   * Mengalihkan status aktif/nonaktif server web lokal.
+   */
+  fun toggleWebServer() {
+    if (com.example.util.WebPortalServer.isServerRunning.value) {
+      stopWebServer()
+    } else {
+      startWebServer()
+    }
+  }
+
+  /**
+   * Menyiapkan file HTML mandiri SIDAPENDA Web Portal untuk dibagikan/disimpan.
+   */
+  fun exportWebPortalHtml(): java.io.File? {
+    return try {
+      val app = getApplication<Application>()
+      val html = com.example.util.WebPortalServer.loadWebPortalHtml(app)
+      val outFile = java.io.File(app.cacheDir, "dapenda_web_portal.html")
+      outFile.writeText(html, Charsets.UTF_8)
+      outFile
+    } catch (e: Exception) {
+      null
+    }
+  }
 }
+

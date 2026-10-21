@@ -93,7 +93,7 @@ class ResidentRepository(private val dao: ResidentDao) {
    */
   fun exportToJson(residents: List<Resident>, includePhotos: Boolean = true): String {
     val root = JSONObject()
-    root.put("app", "DAPENDA")
+    root.put("app", "SIDAPENDA")
     root.put("schemaVersion", 2)
     root.put("village", "Desa Benda")
     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
@@ -167,7 +167,7 @@ class ResidentRepository(private val dao: ResidentDao) {
       } else {
         BackupPreview(
           isValid = true,
-          appName = app.ifBlank { "DAPENDA" },
+          appName = app.ifBlank { "SIDAPENDA" },
           village = village,
           totalRecords = total,
           exportedAt = exportedAt,
@@ -295,7 +295,7 @@ class ResidentRepository(private val dao: ResidentDao) {
         newInserted = insertedCount,
         updatedCount = updatedCount,
         photosRestored = photosRestored,
-        message = "Berhasil memproses ${arr.length()} data warga ($photosRestored berkas foto dipulihkan) ke sistem DAPENDA."
+        message = "Berhasil memproses ${arr.length()} data warga ($photosRestored berkas foto dipulihkan) ke sistem SIDAPENDA."
       )
     } catch (e: Exception) {
       ImportResult(false, 0, 0, 0, 0, "Gagal mengimpor data: ${e.localizedMessage}")
@@ -353,7 +353,7 @@ class ResidentRepository(private val dao: ResidentDao) {
     val kontrak = list.count { it.statusTinggal.contains("Kontrak", ignoreCase = true) }
 
     return """
-      *LAPORAN REKAPITULASI KEPENDUDUKAN DAPENDA*
+      *LAPORAN REKAPITULASI KEPENDUDUKAN SIDAPENDA*
       Wilayah: ${if (targetRt == "Semua RT" || targetRt.isBlank()) "Seluruh RT (Desa Benda)" else targetRt}
       Tanggal: 2026-10-15
       -----------------------------------------
@@ -376,7 +376,7 @@ class ResidentRepository(private val dao: ResidentDao) {
       • Penerima Bantuan Sosial: $bansos
       • Penyandang Disabilitas: $disabilitas
       -----------------------------------------
-      _Digenerate otomatis melalui aplikasi DAPENDA (Data Penduduk RT)_
+      _Digenerate otomatis melalui aplikasi SIDAPENDA (Data Penduduk RT)_
     """.trimIndent()
   }
 }

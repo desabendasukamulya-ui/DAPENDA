@@ -542,7 +542,7 @@ fun ExportBackupScreen(
                       val sendIntent = Intent().apply {
                         action = Intent.ACTION_SEND
                         putExtra(Intent.EXTRA_STREAM, contentUri)
-                        putExtra(Intent.EXTRA_SUBJECT, "Data Cadangan DAPENDA Desa Benda.json")
+                        putExtra(Intent.EXTRA_SUBJECT, "Data Cadangan SIDAPENDA Desa Benda.json")
                         type = "application/json"
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                       }
@@ -704,7 +704,7 @@ fun ExportBackupScreen(
                 onClick = {
                   val csv = viewModel.exportCsvContent()
                   val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                  val clip = ClipData.newPlainText("DAPENDA CSV", csv)
+                  val clip = ClipData.newPlainText("SIDAPENDA CSV", csv)
                   clipboard.setPrimaryClip(clip)
                   viewModel.showToast("CSV berhasil disalin ke clipboard!")
                 },
@@ -720,7 +720,7 @@ fun ExportBackupScreen(
                   scope.launch(Dispatchers.IO) {
                     try {
                       val csv = viewModel.exportCsvContent()
-                      val file = File(context.cacheDir, "dapenda_data_penduduk_benda.csv")
+                      val file = File(context.cacheDir, "sidapenda_data_penduduk_benda.csv")
                       FileOutputStream(file).use { out ->
                         out.write(csv.toByteArray(Charsets.UTF_8))
                         out.flush()
@@ -733,7 +733,7 @@ fun ExportBackupScreen(
                       val sendIntent = Intent().apply {
                         action = Intent.ACTION_SEND
                         putExtra(Intent.EXTRA_STREAM, contentUri)
-                        putExtra(Intent.EXTRA_SUBJECT, "Data Kependudukan DAPENDA Desa Benda.csv")
+                        putExtra(Intent.EXTRA_SUBJECT, "Data Kependudukan SIDAPENDA Desa Benda.csv")
                         type = "text/csv"
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                       }
@@ -919,7 +919,7 @@ fun ExportBackupScreen(
             Text(
               text = "1. Di HP Pertama: Buka menu ini, pilih 'Kirim ke HP Lain' lalu bagikan melalui WhatsApp, Bluetooth, atau Google Drive.\n" +
                 "2. Di HP Kedua: Simpan file yang diterima ke memori HP.\n" +
-                "3. Buka aplikasi DAPENDA di HP kedua, klik 'Pilih File Cadangan untuk Diimpor', lalu pilih 'Gabungkan Data'.\n" +
+                "3. Buka aplikasi SIDAPENDA di HP kedua, klik 'Pilih File Cadangan untuk Diimpor', lalu pilih 'Gabungkan Data'.\n" +
                 "Semua data penduduk beserta berkas foto KTP & KK akan langsung tersinkronisasi!",
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,

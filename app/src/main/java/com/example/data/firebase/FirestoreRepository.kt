@@ -339,23 +339,31 @@ class FirestoreRepository(
     }
   }
 
-  suspend fun seedDefaultOperatorsIfEmpty(): Result<Unit> {
+  /**
+   * Menghapus semua data operator contoh otomatis dari Firestore.
+   * Data operator hanya akan ada ketika ada petugas yang mendaftar.
+   */
+  suspend fun cleanupDummyOperators(): Result<Unit> {
     return try {
       val snapshot = usersCollection.get().await()
-      // Jika belum ada operator yang terdaftar selain admin, daftarkan operator bawaan
-      val existingOperators = snapshot.documents.mapNotNull { it.toObject(UserProfile::class.java) }
-        .filter { !it.isAdmin }
-
-      if (existingOperators.isEmpty()) {
-        val defaults = com.example.data.sample.SampleData.getDefaultRegisteredOperators()
-        for (op in defaults) {
-          usersCollection.document(op.uid).set(op).await()
+      for (doc in snapshot.documents) {
+        val user = doc.toObject(UserProfile::class.java)
+        val isDummy = com.example.data.sample.SampleData.dummyOperatorUids.contains(doc.id) ||
+            doc.id.startsWith("op_rt") ||
+            (user != null && !user.isAdmin && user.email.endsWith("@desabenda.id"))
+        if (isDummy) {
+          doc.reference.delete().await()
         }
       }
       Result.success(Unit)
     } catch (e: Exception) {
       Result.failure(e)
     }
+  }
+
+  suspend fun seedDefaultOperatorsIfEmpty(): Result<Unit> {
+    // Sesuai instruksi: Data operator dikosongkan, tidak ada seeding otomatis
+    return Result.success(Unit)
   }
 
   suspend fun findUserByIdentifier(query: String): UserProfile? {
@@ -517,6 +525,119 @@ class FirestoreRepository(
         entityId = mutation.nik,
         performedBy = userEmail,
         details = "Input Warga Pindah Keluar: ${mutation.namaLengkap} (NIK: ${mutation.nik}) tujuan ${mutation.alamatLuar}. Otomatis mengurangi 1 warga dari ${mutation.rt}."
+      )
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
+
+  /**
+   * Mencatat peristiwa KELAHIRAN dan secara OTOMATIS MENAMBAH data anak/bayi ke data penduduk aktif.
+   */
+  suspend fun recordKelahiran(event: PopulationMutation, userEmail: String): Result<Unit> {
+    return try {
+      require(event.namaLengkap.isNotBlank()) { "Nama lengkap bayi wajib diisi!" }
+      val cleanNik = if (event.nik.length == 16) event.nik else {
+        // Generate nomor registrasi NIK bayi otomatis berbasis tanggal lahir & RT jika belum terbit dari dukcapil
+        val cleanDate = event.tanggalLahir.replace("-", "").take(6)
+        val rand = (1000..9999).random().toString()
+        if (cleanDate.length == 6) "3603" + cleanDate + rand else "3603" + System.currentTimeMillis().toString().takeLast(12)
+      }
+
+      // 1. Simpan dokumen catatan kelahiran di koleksi mutasi/peristiwa
+      val docRef = if (event.id.isNotBlank()) mutationsCollection.document(event.id) else mutationsCollection.document()
+      val finalEvent = event.copy(
+        id = docRef.id,
+        nik = cleanNik,
+        type = PopulationMutation.TYPE_KELAHIRAN,
+        petugas = userEmail,
+        createdAt = System.currentTimeMillis()
+      )
+      docRef.set(finalEvent).await()
+
+      // 2. OTOMATIS MENAMBAH anak/bayi ke koleksi penduduk aktif (residents)
+      val newBabyResident = Resident(
+        id = cleanNik.toLongOrNull() ?: System.currentTimeMillis(),
+        nik = cleanNik,
+        noKk = event.noKk.trim(),
+        namaLengkap = event.namaLengkap.trim(),
+        jenisKelamin = event.jenisKelamin,
+        tempatLahir = event.tempatLahir.trim().ifBlank { "Tangerang" },
+        tanggalLahir = event.tanggalLahir.trim(),
+        rt = event.rt.trim(),
+        rw = event.rw.trim(),
+        dusun = event.dusun.trim().ifBlank { "Dusun Benda" },
+        alamatLengkap = event.alamatLokal.trim().ifBlank { "Desa Benda, ${event.rt}/${event.rw}" },
+        agama = "Islam",
+        statusKeluarga = "Anak",
+        statusKawin = "Belum Kawin",
+        pekerjaan = "Belum / Tidak Bekerja",
+        pendidikan = "Tidak/Belum Sekolah",
+        golonganDarah = "-",
+        statusTinggal = "Warga Tetap",
+        noHp = event.noHp.trim(),
+        catatan = "Pencatatan Kelahiran Baru (Tgl: ${event.tanggalMutasi}). Ibu: ${event.namaIbu}, Ayah: ${event.namaAyah}. Berat: ${event.beratLahir}, Panjang: ${event.panjangLahir}. ${event.catatan}".trim(),
+        createdAt = System.currentTimeMillis()
+      )
+      saveResident(newBabyResident, userEmail)
+
+      // 3. Catat audit log
+      logActivity(
+        action = "PERISTIWA_KELAHIRAN",
+        entityId = cleanNik,
+        performedBy = userEmail,
+        details = "Input Kelahiran: ${event.namaLengkap} (Anak dari ${event.namaAyah}/${event.namaIbu}) di ${event.rt}/${event.rw}. Otomatis menambah 1 jiwa baru di data warga."
+      )
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
+
+  /**
+   * Mencatat peristiwa KEMATIAN dan secara OTOMATIS MENGURANGI data warga dari daftar penduduk aktif.
+   */
+  suspend fun recordKematian(
+    event: PopulationMutation,
+    removePermanently: Boolean,
+    userEmail: String
+  ): Result<Unit> {
+    return try {
+      require(event.nik.length == 16) { "NIK harus tepat 16 digit!" }
+
+      // 1. Simpan dokumen catatan kematian
+      val docRef = if (event.id.isNotBlank()) mutationsCollection.document(event.id) else mutationsCollection.document()
+      val finalEvent = event.copy(
+        id = docRef.id,
+        type = PopulationMutation.TYPE_KEMATIAN,
+        petugas = userEmail,
+        createdAt = System.currentTimeMillis()
+      )
+      docRef.set(finalEvent).await()
+
+      // 2. OTOMATIS MENGURANGI dari data kependudukan aktif
+      val resDocRef = residentsCollection.document(event.nik)
+      if (removePermanently) {
+        resDocRef.delete().await()
+      } else {
+        // Tandai statusTinggal = "Meninggal" sehingga otomatis terkurangi dari hitungan warga aktif dan statistik
+        resDocRef.update(
+          mapOf(
+            "statusTinggal" to "Meninggal",
+            "catatan" to "Meninggal Dunia pada ${event.tanggalMutasi}. Penyebab: ${event.penyebabKematian}. Dimakamkan di: ${event.tempatPemakaman}. Pelapor: ${event.namaPelapor}. ${event.catatan}".trim(),
+            "updatedAt" to System.currentTimeMillis(),
+            "updatedBy" to userEmail
+          )
+        ).await()
+      }
+
+      // 3. Catat audit log
+      logActivity(
+        action = "PERISTIWA_KEMATIAN",
+        entityId = event.nik,
+        performedBy = userEmail,
+        details = "Input Kematian: ${event.namaLengkap} (NIK: ${event.nik}) di ${event.rt}/${event.rw}. Penyebab: ${event.penyebabKematian}. Otomatis mengurangi 1 warga dari data aktif."
       )
       Result.success(Unit)
     } catch (e: Exception) {
